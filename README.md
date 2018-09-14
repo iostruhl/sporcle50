@@ -12,4 +12,4 @@ While originally intended for CS50 TFs to upload photos of students in their sec
 - Latency is currently crap. At least add a loading image
 - Keep track of scores cross session (trivial with Firebase)
 - UI/UX?
-- Ranking system (amonst TFs at least to start)?
+- Ranking system?
