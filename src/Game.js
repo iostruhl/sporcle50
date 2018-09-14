@@ -142,6 +142,7 @@ class Game extends Component {
           {!this.state.start && // Before the game starts
             <div>
               <h1 className="Game-stats">{this.state.time.toFixed(1)}</h1>
+              <h2>Enter the names of students as they appear; enter '?' to give up.</h2>
               <button autoFocus onClick={this.startGame}>Start</button>
             </div>
           }
