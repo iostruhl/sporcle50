@@ -1,27 +1,27 @@
-.App {
+.Game {
   text-align: center;
 }
 
-.App-logo {
+.Game-logo {
   animation: App-logo-spin infinite 20s linear;
   height: 80px;
 }
 
-.App-header {
+.Game-header {
   background-color: #222;
   height: 150px;
   padding: 20px;
   color: white;
 }
 
-.App-title {
+.Game-title {
   font-size: 2.0em;
 }
 
-.App-stats {
+.Game-stats {
   font-size: 1.2em;
 }
 
-.App-intro {
+.Game-intro {
   font-size: large;
 }

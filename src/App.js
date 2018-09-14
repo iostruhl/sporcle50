@@ -1,114 +1,78 @@
-import React, { Component } from 'react';
-import './App.css';
+import React, { Component } from 'react'
+import './App.css'
+import Game from './Game'
+import Auth from './Auth'
+import Upload from './Upload'
+import * as firebase from 'firebase'
+
+const config = {
+  apiKey: "AIzaSyBzEhC-t2TO7R-xuxJsA-6QZaOaFmg-mEM",
+  authDomain: "sporcle50-e268b.firebaseapp.com",
+  databaseURL: "https://sporcle50-e268b.firebaseio.com",
+  projectId: "sporcle50-e268b",
+  storageBucket: "sporcle50-e268b.appspot.com",
+  messagingSenderId: "710467259615"
+}
+firebase.initializeApp(config);
+
+var db = firebase.firestore()
+db.settings({
+  timestampsInSnapshots: true
+})
 
 class App extends Component {
   constructor() {
     super()
     this.state = {
-      imgs: null,
-      imgsRemaining: null,
-      current: null,
-      currentFirstName: null,
-      remaining: null,
-      start: false,
-      time: 0.0,
-      answer: "",
-      displayAnswer: false,
+      user: null,
+      populated: false,
       loading: true
     }
 
-    this.handleChange = this.handleChange.bind(this);
-    this.getRandomImage = this.getRandomImage.bind(this);
-    this.startGame = this.startGame.bind(this);
-    this.continueGame = this.continueGame.bind(this);
-    this.tick = this.tick.bind(this);
+    this.signOut = this.signOut.bind(this)
+    this.uploadNew = this.uploadNew.bind(this)
+    this.verifyUpload = this.verifyUpload.bind(this)
   }
 
   componentDidMount() {
-    const context = require.context("../photos/", false, /.*\.jpg$/)
-    this.imgs = {}
-    context.keys().forEach(key => {
-      let name = key.split('./').pop().substring(0, key.length - 6)
-      this.imgs[name] = context(key)
-    })
-
-    this.setState({
-      loading: false
-    })
-  }
-
-  startGame() {
-    let names = Object.keys(this.imgs)
-    let next = this.getRandomImage(names)
-    this.timer = setInterval(this.tick, 100)
-
-    this.setState({
-      imgsRemaining: names,
-      current: next,
-      currentFirstName: next.split('-')[0].toLowerCase(),
-      remaining: names.length,
-      time: 0.0,
-      start: true
-    })
-  }
-
-  componentWillUnmount() {
-    clearInterval(this.timer)
-  }
-
-  tick() {
-    this.setState(prevState => ({
-      time: prevState.time + 0.1
-    }))
-  }
-
-  getRandomImage(imgs) {
-    return imgs[Math.floor(Math.random() * imgs.length)]
-  }
-
-  handleChange(event) {
-    this.setState({answer: event.target.value}, () => {
-      // Correct answer entered
-      if (this.state.answer.toLowerCase() === this.state.currentFirstName) {
-
-        // Hack. Remove the answered element from imgsRemaining
-        this.state.imgsRemaining.splice(this.state.imgsRemaining.indexOf(this.state.current), 1)
-        let updatedImgs = this.state.imgsRemaining
-
-        // Game ended
-        if (!updatedImgs.length) {
-            this.setState({start: false})
-            clearInterval(this.timer)
-            return
-        }
-
-        // Set up next image
-        let next = this.getRandomImage(updatedImgs)
-        this.setState(prevState => ({
-          imgsRemaining: updatedImgs,
-          current: next,
-          currentFirstName: next.split('-')[0].toLowerCase(),
-          remaining: prevState.remaining - 1,
-          answer: ""
+    // Listen for authentication state changes
+    // Fires once at the beginning even if the user isn't logged in
+    firebase.auth().onAuthStateChanged(user => {
+      let promises = []
+      let populated = false
+      if (user) {
+        promises.push(db.doc(`users/${user.uid}`).get().then(doc => {
+          if (doc.exists) {
+            populated = doc.data().populated
+          }
+          else {
+            // returns this promise so that the first call to db.doc is .then()able
+            return db.doc(`users/${user.uid}`).set({populated: false})
+          }
         }))
       }
-
-      // If player gives up
-      if (this.state.answer === "?") {
+      Promise.all(promises).then(() => {
         this.setState({
-          displayAnswer: true
+          user: user,
+          populated: populated,
+          loading: false
         })
-      }
-    });
+      })
+    })  
+  }
+  uploadNew() {
+    this.setState({populated: false})
   }
 
-  continueGame() {
-    let next = this.getRandomImage(this.state.imgsRemaining)
-    this.setState({
-      current: next,
-      currentFirstName: next.split('-')[0].toLowerCase(),
-      answer: "",
-      displayAnswer: false
+  verifyUpload() {
+    db.doc(`users/${this.state.user.uid}`).get().then(doc => {
+      this.setState({populated: doc.data().populated})
+    })
+  }
+
+  signOut() {
+    firebase.auth().signOut().catch(error => {
+      alert(error)
     })
   }
 
@@ -116,40 +80,21 @@ class App extends Component {
     if (this.state.loading) {
       return null
     }
-    else {
-      return (
-        <div className="App">
-          <h1 className="App-title">Learn Your Section!</h1>
-          {!this.state.start && // Before the game starts
-            <div>
-              <h1 className="App-stats">{this.state.time.toFixed(1)}</h1>
-              <button autoFocus onClick={this.startGame}>Start</button>
-            </div>
-          }
-          {this.state.start && !this.state.displayAnswer && // Normal gameplay
-            <div>
-              <h1 className="App-stats">{this.state.time.toFixed(1)}</h1>
-              <h1 className="App-stats">Remaining: {this.state.remaining}</h1>
-              <img src={this.imgs[this.state.current]} alt="student" />
-              <div>
-                <input type="text" autoFocus placeholder="Name" value={this.state.answer} onChange={this.handleChange}/>
-              </div>
-            </div>
-          }
-          {this.state.start && this.state.displayAnswer && // Display answer
-            <div>
-              <h1 className="App-stats">{this.state.current.split('-').join(' ')}</h1>
-              <img src={this.imgs[this.state.current]} alt="student" />
-              <div>
-                <button autoFocus onClick={this.continueGame}>Continue</button>
-              </div>
-            </div>
-          }
-        </div>
-      );  
+    else if(this.state.user) {
+      // User has authenticated and has populated database with photos
+      if (this.state.populated) {
+        return <Game logOut={this.signOut} uid={this.state.user.uid} uploadNew={this.uploadNew}/>
+      }
+      // User has authenticated, but has not uploaded photos
+      else {
+        return <Upload logOut={this.signOut} uid={this.state.user.uid} verifyUpload={this.verifyUpload}/>
+      }
     }
-    
+    // User not authenticated
+    else {
+      return <Auth />
+    }
   }
 }
 
-export default App;
+export default App

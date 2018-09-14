@@ -1,27 +1,27 @@
-.App {
+.Upload {
   text-align: center;
 }
 
-.App-logo {
+.Upload-logo {
   animation: App-logo-spin infinite 20s linear;
   height: 80px;
 }
 
-.App-header {
+.Upload-header {
   background-color: #222;
   height: 150px;
   padding: 20px;
   color: white;
 }
 
-.App-title {
+.Upload-title {
   font-size: 2.0em;
 }
 
-.App-stats {
+.Upload-stats {
   font-size: 1.2em;
 }
 
-.App-intro {
+.Upload-intro {
   font-size: large;
 }
